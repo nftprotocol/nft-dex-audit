@@ -6,13 +6,7 @@ https://nft-dex.org
 
 Install:
 ```
-nvm use 12
 npm i
-```
-
-Configure:
-```
-# Edit secrets_example.json add mnemonic and infura key and save as secrets.json
 ```
 
 Deploy contracts on ganache mainnet fork:
