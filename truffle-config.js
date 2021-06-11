@@ -9,6 +9,7 @@ module.exports = {
       gasPrice: 1e9,
       gas: 4000000,
       networkId: '*',
+      network_id: '*'
     }
   },
   plugins: ["solidity-coverage"],
