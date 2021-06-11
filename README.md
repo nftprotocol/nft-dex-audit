@@ -11,6 +11,9 @@ npm i
 
 Deploy contracts on ganache mainnet fork:
 ```
+rpc="wss://mainnet.infura.io/ws/v3/..."
+mnemonic="correct horse battery staple..."
+./node_modules/.bin/ganache-cli -f "$rpc" -m "$mnemonic"
 npx truffle migrate --network development --reset
 ```
 
