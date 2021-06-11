@@ -1,0 +1,696 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html4" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Contract &mdash; NFT Protocol DEX  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Flat fee" href="fees.html" />
+    <link rel="prev" title="Addresses" href="addresses.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="index.html" class="icon icon-home"> NFT Protocol DEX
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                2.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="concept.html">Concept</a></li>
+<li class="toctree-l1"><a class="reference internal" href="addresses.html">Addresses</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Contract</a></li>
+<li class="toctree-l1"><a class="reference internal" href="fees.html">Flat fee</a></li>
+<li class="toctree-l1"><a class="reference internal" href="governance.html">Governance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Example</a></li>
+<li class="toctree-l1"><a class="reference internal" href="faqs.html">FAQ’s</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">NFT Protocol DEX</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Contract</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/contract.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="contract">
+<span id="index-0"></span><span id="id1"></span><h1>Contract<a class="headerlink" href="#contract" title="Permalink to this headline">¶</a></h1>
+<dl class="contract">
+<dt id="NFTProtocolDEX">
+<em>contract </em><code class="descname">NFTProtocolDEX</code> is ERC1155Holder<a class="headerlink" href="#NFTProtocolDEX" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="struct">
+<dt id="NFTProtocolDEX.Component">
+<em>struct </em><code class="descname">Component</code><a class="headerlink" href="#NFTProtocolDEX.Component" title="Permalink to this definition">¶</a></dt>
+<dd><p>Datastructure of a swap component representing an asset of ERC1155, ERC721, ERC20, or ETH.
+ERC1155 batches are supported through tokenIds and amounts as arrays.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Members:</th><td class="field-body"><ul class="first last simple">
+<li><strong>assetType</strong> (<em>uint8</em>) – 0 - <cite>ERC1155</cite>, 1 - <cite>ERC721</cite>, 2 - <cite>ERC20</cite>, 3 - <cite>Ether</cite>.</li>
+<li><strong>tokenAddress</strong> (<em>address</em>) – address of the token.</li>
+<li><strong>tokenIds</strong> (<em>uint256[]</em>) – array if token ids. Multiple token ids can be specified for ERC1155 batch transfers. For ERC721 transfers, this array holds one value.</li>
+<li><strong>amounts</strong> (<em>uint256[]</em>) – array if amounts. Multiple amounts can be specified for ERC1155 batch transfers. For ERC721 transfers, this arrray holds one value.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="struct">
+<dt id="NFTProtocolDEX.Swap">
+<em>struct </em><code class="descname">Swap</code><a class="headerlink" href="#NFTProtocolDEX.Swap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Datastructure representing a swap, which allows for exchanging arbitrary lists of
+ERC1155, ERC721, ERC20, and Ether assets.</p>
+<dl class="docutils">
+<dt>Example:</dt>
+<dd>Offer [ERC721, ERC721, ERC1155 Batch, ERC1155 Batch, ERC20, …, ERC20, Ether]
+for [ERC20, …, ERC20, ERC721, …, ERC721].</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Members:</th><td class="field-body"><ul class="first last simple">
+<li><strong>id</strong> (<em>uint256</em>) – id of the swap.</li>
+<li><strong>status</strong> (<em>uint8</em>) – swap status: 0 - <cite>open</cite>, 1 - <cite>closed</cite>, 2 - <cite>dropped</cite>.</li>
+<li><strong>components</strong> (<em>Component[][2]</em>) – Two arrays of <a class="reference internal" href="#NFTProtocolDEX.Component" title="Component"><code class="xref sol sol-struct docutils literal notranslate"><span class="pre">Component</span></code></a>, one for the maker side and one for the taker side.</li>
+<li><strong>makerAddress</strong> (<em>address</em>) – address of the maker account.</li>
+<li><strong>takerAddress</strong> (<em>address</em>) – address of the taker account.</li>
+<li><strong>whitelistEnabled</strong> (<em>bool</em>) – <cite>true</cite> if whitelist for this swap is enabled, <cite>false</cite> otherwise.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="event">
+<dt id="NFTProtocolDEX.MakeSwap(Component[],Component[],address,address[],uint256)">
+<em>event </em><code class="descname">MakeSwap</code><span class="sig-paren">(</span><em>Component[] make</em>, <em>Component[] take</em>, <em>address indexed makerAddress</em>, <em>address[] whitelist</em>, <em>uint256 indexed id</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.MakeSwap(Component[],Component[],address,address[],uint256)" title="Permalink to this definition">¶</a><br /><a class="headerlink" href="#NFTProtocolDEX.MakeSwap(Component[],Component[],address,address[],uint256)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Event triggered when a swap was opened, see <a class="reference internal" href="#NFTProtocolDEX.make(Component[],Component[],address[])" title="make"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">make</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>make</strong> – array of swap components on the maker side, see <a class="reference internal" href="#NFTProtocolDEX.Component" title="Component"><code class="xref sol sol-struct docutils literal notranslate"><span class="pre">Component</span></code></a>.</li>
+<li><strong>take</strong> – array of swap components on the taker side, see <a class="reference internal" href="#NFTProtocolDEX.Component" title="Component"><code class="xref sol sol-struct docutils literal notranslate"><span class="pre">Component</span></code></a>.</li>
+<li><strong>whitelist</strong> – array of addresses that are allowed to take the swap.</li>
+<li><strong>id</strong> – id of the swap.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="event">
+<dt id="NFTProtocolDEX.TakeSwap(uint256,address,uint256)">
+<em>event </em><code class="descname">TakeSwap</code><span class="sig-paren">(</span><em>uint256 swapId</em>, <em>address takerAddress</em>, <em>uint256 fee</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.TakeSwap(uint256,address,uint256)" title="Permalink to this definition">¶</a><br /><a class="headerlink" href="#NFTProtocolDEX.TakeSwap(uint256,address,uint256)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emitted when a swap was executed, see <a class="reference internal" href="#NFTProtocolDEX.take(uint256)" title="take"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">take</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>swapId</strong> – id of the swap that was taken.</li>
+<li><strong>takerAddress</strong> – address of the account that executed the swap.</li>
+<li><strong>fee</strong> – WEI of ETHER that was paid for the swap.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="event">
+<dt id="NFTProtocolDEX.DropSwap(uint256)">
+<em>event </em><code class="descname">DropSwap</code><span class="sig-paren">(</span><em>uint256 swapId</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.DropSwap(uint256)" title="Permalink to this definition">¶</a><br /><a class="headerlink" href="#NFTProtocolDEX.DropSwap(uint256)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emitted when a swap was dropped, ie. cancelled.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>swapId</strong> – id of the dropped swap.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="event">
+<dt id="NFTProtocolDEX.Vote(uint256,uint256,uint256)">
+<em>event </em><code class="descname">Vote</code><span class="sig-paren">(</span><em>uint256 flatFee</em>, <em>uint256 feeBypassLow</em>, <em>uint256 feeBypassHigh</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.Vote(uint256,uint256,uint256)" title="Permalink to this definition">¶</a><br /><a class="headerlink" href="#NFTProtocolDEX.Vote(uint256,uint256,uint256)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Emitted when fee parameters have changed, see <a class="reference internal" href="#NFTProtocolDEX.vote(uint256,uint256,uint256)" title="vote"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">vote</span></code></a>, <a class="reference internal" href="#NFTProtocolDEX.fees()" title="fees"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">fees</span></code></a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>flatFee</strong> – fee to be paid by a swap taker in WEI of ETHER.</li>
+<li><strong>feeBypassLow</strong> – threshold of NFT Protocol tokens to be held by a swap taker in order to get a 10% fee discount.</li>
+<li><strong>feeBypassHigh</strong> – threshold of NFT Protocol tokens to be held by a swap taker in order to pay no fees.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.msig">
+address <em>public </em><code class="descname">msig</code><a class="headerlink" href="#NFTProtocolDEX.msig" title="Permalink to this definition">¶</a></dt>
+<dd><p>Multisig address for administrative functions.</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.nftProtocolTokenAddress">
+address public immutable <code class="descname">nftProtocolTokenAddress</code><a class="headerlink" href="#NFTProtocolDEX.nftProtocolTokenAddress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Address of the ERC20 NFT Protcol token.</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.flat">
+uint256 <em>public </em><code class="descname">flat</code><a class="headerlink" href="#NFTProtocolDEX.flat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flat fee for all trades in WEI of ETHER, default is 0.001 ETHER.
+The flat fee can be changed by the multisig account, see <a class="reference internal" href="#NFTProtocolDEX.vote(uint256,uint256,uint256)" title="vote"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">vote</span></code></a>.</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.locked">
+bool <em>public </em><code class="descname">locked</code><a class="headerlink" href="#NFTProtocolDEX.locked" title="Permalink to this definition">¶</a></dt>
+<dd><p>Indicates if the DEX is locked down in case of an emergency.
+The value is <cite>true</cite> if the DEX is locked, <cite>false</cite> otherwise.</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.felo">
+uint256 <em>public </em><code class="descname">felo</code><a class="headerlink" href="#NFTProtocolDEX.felo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Low threshold of NFT Protocol token balance where a 10% fee discount is enabled.
+See <a class="reference internal" href="#NFTProtocolDEX.fees()" title="fees"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">fees</span></code></a>, <a class="reference internal" href="#NFTProtocolDEX.vote(uint256,uint256,uint256)" title="vote"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">vote</span></code></a>.</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.fehi">
+uint256 <em>public </em><code class="descname">fehi</code><a class="headerlink" href="#NFTProtocolDEX.fehi" title="Permalink to this definition">¶</a></dt>
+<dd><p>High threshold of NFT Protocol token balance where fees are waived.
+See <a class="reference internal" href="#NFTProtocolDEX.fees()" title="fees"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">fees</span></code></a>, <a class="reference internal" href="#NFTProtocolDEX.vote(uint256,uint256,uint256)" title="vote"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">vote</span></code></a>.</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.ERC1155_ASSET">
+uint8 public constant <code class="descname">ERC1155_ASSET</code><a class="headerlink" href="#NFTProtocolDEX.ERC1155_ASSET" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asset type 0 for ERC1155 swap components</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.ERC721_ASSET">
+uint8 public constant <code class="descname">ERC721_ASSET</code><a class="headerlink" href="#NFTProtocolDEX.ERC721_ASSET" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asset type 1 for ERC721 swap components</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.ERC20_ASSET">
+uint8 public constant <code class="descname">ERC20_ASSET</code><a class="headerlink" href="#NFTProtocolDEX.ERC20_ASSET" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asset type 2 for ERC20 swap components</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.ETH_ASSET">
+uint8 public constant <code class="descname">ETH_ASSET</code><a class="headerlink" href="#NFTProtocolDEX.ETH_ASSET" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asset type 3 for ETH swap components</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.OPEN_SWAP">
+uint8 public constant <code class="descname">OPEN_SWAP</code><a class="headerlink" href="#NFTProtocolDEX.OPEN_SWAP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Swap status 0 for swaps that are open and active.</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.CLOSED_SWAP">
+uint8 public constant <code class="descname">CLOSED_SWAP</code><a class="headerlink" href="#NFTProtocolDEX.CLOSED_SWAP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Swap status 1 for swaps that are closed.</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.DROPPED_SWAP">
+uint8 public constant <code class="descname">DROPPED_SWAP</code><a class="headerlink" href="#NFTProtocolDEX.DROPPED_SWAP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Swap status 2 for swaps that are dropped, ie. cancelled.</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.swap">
+mapping (uint256 =&gt; Swap) <em>public </em><code class="descname">swap</code><a class="headerlink" href="#NFTProtocolDEX.swap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map holding all swaps (including cancelled and executed swaps).</p>
+</dd></dl>
+
+<dl class="statevar">
+<dt id="NFTProtocolDEX.list">
+mapping (uint256 =&gt; mapping (address =&gt; bool)) <em>public </em><code class="descname">list</code><a class="headerlink" href="#NFTProtocolDEX.list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Map from swapId to whitelist of a swap.</p>
+</dd></dl>
+
+<dl class="constructor">
+<dt id="NFTProtocolDEX.constructor">
+<code class="descname">constructor</code><span class="sig-paren">(</span><em>address _nftProtocolToken</em>, <em>address _multisig</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.constructor" title="Permalink to this definition">¶</a><br /><a class="headerlink" href="#NFTProtocolDEX.constructor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initializes the contract by setting the address of the NFT Protocol token
+and multisig (administrator) account.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_nftProtocolToken</strong> – address of the NFT Protocol ERC20 token</li>
+<li><strong>_multisig</strong> – address of the administrator account</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.make(Component[],Component[],address[])">
+<em>function </em><code class="descname">make</code><span class="sig-paren">(</span><em>Component[] calldata _make</em>, <em>Component[] calldata _take</em>, <em>address[] calldata _whitelist</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.make(Component[],Component[],address[])" title="Permalink to this definition">¶</a><br /> <em>external</em><br /> <em>payable</em><br /><a class="headerlink" href="#NFTProtocolDEX.make(Component[],Component[],address[])" title="Permalink to this definition">¶</a></dt>
+<dd><p>Opens a swap with a list of assets on the maker side (_make) and on the taker side (_take).</p>
+<p>All assets listed on the maker side have to be available in the caller’s account.
+They are transferred to the DEX contract during this contract call.</p>
+<p>If the maker list contains ETHER assets, then the total ETHER funds have to be sent along with
+the message of this contract call.</p>
+<p>Emits a <a class="reference internal" href="#NFTProtocolDEX.MakeSwap(Component[],Component[],address,address[],uint256)" title="MakeSwap"><code class="xref sol sol-event docutils literal notranslate"><span class="pre">MakeSwap</span></code></a> event.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_make</strong> – array of components for the maker side of the swap.</li>
+<li><strong>_take</strong> – array of components for the taker side of the swap.</li>
+<li><strong>_whitelist</strong> – list of addresses that shall be permitted to take the swap.
+If empty, then whitelisting will be disabled for this swap.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.take(uint256)">
+<em>function </em><code class="descname">take</code><span class="sig-paren">(</span><em>uint256 _swapId</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.take(uint256)" title="Permalink to this definition">¶</a><br /> <em>external</em><br /> <em>payable</em><br /><a class="headerlink" href="#NFTProtocolDEX.take(uint256)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Takes a swap that is currently open.</p>
+<p>All assets listed on the taker side have to be available in the caller’s account, see <a class="reference internal" href="#NFTProtocolDEX.make(Component[],Component[],address[])" title="make"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">make</span></code></a>.
+They are transferred to the maker’s account in exchange for the maker’s assets (that currently reside within the DEX contract),
+which are transferred to the taker’s account.</p>
+<p>The fee for this trade has to be sent along with the message of this contract call, see <a class="reference internal" href="#NFTProtocolDEX.fees()" title="fees"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">fees</span></code></a>.</p>
+<p>If the taker list contains ETHER assets, then the total ETHER value also has to be added in WEI to the value that is sent along with
+the message of this contract call.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_swapId</strong> – id of the swap to be taken.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.drop(uint256)">
+<em>function </em><code class="descname">drop</code><span class="sig-paren">(</span><em>uint256 _swapId</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.drop(uint256)" title="Permalink to this definition">¶</a><br /> <em>public</em><br /><a class="headerlink" href="#NFTProtocolDEX.drop(uint256)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Cancel a swap and return the assets on the maker side back to the maker.</p>
+<p>All ERC1155, ERC721, and ERC20 assets will the transferred back directly to the maker.
+ETH assets are booked to the maker account and can be extracted via <a class="reference internal" href="#NFTProtocolDEX.pull()" title="pull"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">pull</span></code></a>.</p>
+<p>Only the swap maker will be able to call this function successfully.</p>
+<p>Only swaps that are currently open can be dropped.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_swapId</strong> – id of the swap to be dropped.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.pend()">
+<em>function </em><code class="descname">pend</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.pend()" title="Permalink to this definition">¶</a><br /> <em>public</em><br /> <em>view</em><br /> <em>returns </em><span class="sig-paren">(</span><em>uint256</em><span class="sig-paren">)</span><br /><a class="headerlink" href="#NFTProtocolDEX.pend()" title="Permalink to this definition">¶</a></dt>
+<dd><p>WEI of ETHER that can be withdrawn by a user, see <a class="reference internal" href="#NFTProtocolDEX.pull()" title="pull"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">pull</span></code></a>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.pull()">
+<em>function </em><code class="descname">pull</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.pull()" title="Permalink to this definition">¶</a><br /> <em>external</em><br /><a class="headerlink" href="#NFTProtocolDEX.pull()" title="Permalink to this definition">¶</a></dt>
+<dd><p>Withdraw ETHER funds from the contract, see <a class="reference internal" href="#NFTProtocolDEX.pend()" title="pend"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">pend</span></code></a>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.size()">
+<em>function </em><code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.size()" title="Permalink to this definition">¶</a><br /> <em>public</em><br /> <em>view</em><br /> <em>returns </em><span class="sig-paren">(</span><em>uint256</em><span class="sig-paren">)</span><br /><a class="headerlink" href="#NFTProtocolDEX.size()" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total number of swaps in the DEX.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return:</th><td class="field-body">total number of swaps in the database.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.fees()">
+<em>function </em><code class="descname">fees</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.fees()" title="Permalink to this definition">¶</a><br /> <em>public</em><br /> <em>view</em><br /> <em>returns </em><span class="sig-paren">(</span><em>uint256</em><span class="sig-paren">)</span><br /><a class="headerlink" href="#NFTProtocolDEX.fees()" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the fee owed for a trade
+This function is usually called by the taker to determine the amount of ETH
+that has to be paid for a trade.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return:</th><td class="field-body">fees in WEI of ETHER to be paid by the caller as a taker.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.vote(uint256,uint256,uint256)">
+<em>function </em><code class="descname">vote</code><span class="sig-paren">(</span><em>uint256 _flatFee</em>, <em>uint256 _feeBypassLow</em>, <em>uint256 _feeBypassHigh</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.vote(uint256,uint256,uint256)" title="Permalink to this definition">¶</a><br /> <em>external</em><br /><a class="headerlink" href="#NFTProtocolDEX.vote(uint256,uint256,uint256)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Governance votes to set fees.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_flatFee</strong> – flat fee in WEI of ETHER that has to be paid for a trade
+if the taker has less than <cite>_feeBypassLow</cite> NFT Protocol tokens in its account.</li>
+<li><strong>_feeBypassLow</strong> – threshold of NFT Protocol tokens to be held by a swap taker in order to get a 10% fee discount.</li>
+<li><strong>_feeBypassHigh</strong> – threshold of NFT Protocol tokens to be held by a swap taker in order to pay no fees.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.lock(bool)">
+<em>function </em><code class="descname">lock</code><span class="sig-paren">(</span><em>bool _locked</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.lock(bool)" title="Permalink to this definition">¶</a><br /> <em>external</em><br /><a class="headerlink" href="#NFTProtocolDEX.lock(bool)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shut down the DEX in case of an emergency.</p>
+<p>Only the <a class="reference internal" href="#NFTProtocolDEX.msig" title="msig"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">msig</span></code></a> will be able to call this function successfully.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_locked</strong> – <cite>true</cite> to lock down the DEX, <cite>false</cite> to unlock the DEX.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.auth(address)">
+<em>function </em><code class="descname">auth</code><span class="sig-paren">(</span><em>address _to</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.auth(address)" title="Permalink to this definition">¶</a><br /> <em>external</em><br /><a class="headerlink" href="#NFTProtocolDEX.auth(address)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set multisig ie. administrator account.</p>
+<p>Only the <a class="reference internal" href="#NFTProtocolDEX.msig" title="msig"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">msig</span></code></a> will be able to call this function successfully.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_to</strong> – address of the new multisig/admin account</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.snag(address,uint256[])">
+<em>function </em><code class="descname">snag</code><span class="sig-paren">(</span><em>address _nft</em>, <em>uint256[] calldata _ids</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.snag(address,uint256[])" title="Permalink to this definition">¶</a><br /> <em>external</em><br /><a class="headerlink" href="#NFTProtocolDEX.snag(address,uint256[])" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rescue ERC1155 NFTs stuck on the DEX, e.g., that have been sent to the DEX accidentally.</p>
+<p>Only the <a class="reference internal" href="#NFTProtocolDEX.msig" title="msig"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">msig</span></code></a> will be able to call this function successfully.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_nft</strong> – address of the ERC1155 token contract.</li>
+<li><strong>_ids</strong> – array of tokenIds to extract.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.pick(address,uint256)">
+<em>function </em><code class="descname">pick</code><span class="sig-paren">(</span><em>address _nft</em>, <em>uint256 _id</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.pick(address,uint256)" title="Permalink to this definition">¶</a><br /> <em>external</em><br /><a class="headerlink" href="#NFTProtocolDEX.pick(address,uint256)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rescue ERC721 NFTs stuck on the DEX, e.g., that have been sent to the DEX accidentally.</p>
+<p>Only the <a class="reference internal" href="#NFTProtocolDEX.msig" title="msig"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">msig</span></code></a> account will be able to call this function successfully.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_nft</strong> – address of the ERC721 token contract.</li>
+<li><strong>_id</strong> – id of the token to extract.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.grab(address)">
+<em>function </em><code class="descname">grab</code><span class="sig-paren">(</span><em>address _token</em><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.grab(address)" title="Permalink to this definition">¶</a><br /> <em>external</em><br /><a class="headerlink" href="#NFTProtocolDEX.grab(address)" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rescue ERC20 tokens stuck on DEX, e.g., that have been sent to the DEX accidentally.</p>
+<p>Only the <a class="reference internal" href="#NFTProtocolDEX.msig" title="msig"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">msig</span></code></a> account will be able to call this function successfully.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>_token</strong> – address of the ERC20 token contract.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="NFTProtocolDEX.lift()">
+<em>function </em><code class="descname">lift</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#NFTProtocolDEX.lift()" title="Permalink to this definition">¶</a><br /> <em>external</em><br /><a class="headerlink" href="#NFTProtocolDEX.lift()" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rescue ETHER funds from the DEX that do not belong the a user, e.g., fees and ETHER that have been sent to the DEX accidentally.</p>
+<p>This function books the contract’s ETHER funds that do not belong to a user, to the <a class="reference internal" href="#NFTProtocolDEX.msig" title="msig"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">msig</span></code></a> account and makes them
+available for withdrawal through <a class="reference internal" href="#NFTProtocolDEX.pull()" title="pull"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">pull</span></code></a>.</p>
+<p>The user funds that were transfered to the DEX through <a class="reference internal" href="#NFTProtocolDEX.make(Component[],Component[],address[])" title="make"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">make</span></code></a> are protected and cannot be extracted.</p>
+<p>Only the <a class="reference internal" href="#NFTProtocolDEX.msig" title="msig"><code class="xref sol sol-func docutils literal notranslate"><span class="pre">msig</span></code></a> account will be able to call this function successfully.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="fees.html" class="btn btn-neutral float-right" title="Flat fee" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="addresses.html" class="btn btn-neutral float-left" title="Addresses" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021, NFT Protocol.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,152 @@
+.. index:: ! examples
+
+.. _examples:
+
+########
+Example
+########
+
+The following example shows how to create a swap with web3js and calling `make`, followed by trading the swap by calling `take`.
+
+The DEX contract utlitizes ABIEncoderV2 to pass arrays of structs as function arguments, and to our knowledge,
+web3js can only pass such arguments through a raw transaction, which requires the private key of the sender.
+
+
+Initialize contract
+=======================
+
+::
+
+    // config variables
+    let dexAddress       = "<dex-contract-address>";
+    let dexABIFilePath   = "<dex-abi-file-path>";
+    let makerAddress     = "<maker-address>";
+    let makerPrivateKey  = "<maker-private-key>";
+    let takerAddress     = "<taker-address>";
+
+    // create contract
+    let abi = JSON.parse(fs.readFileSync(dexABIFilePath));
+    let contract = new web3.eth.Contract(abi, dexAddress);
+
+
+Send `make` transaction helper
+==============================
+
+::
+
+    sendMakeTransaction = async function(make, take, whitelist) {
+        // encoded make function signature
+        let encoded = contract.methods.make(make, take, whitelist).encodeABI();
+
+        // build transaction
+        let transaction = {
+            from: senderAddress,
+            to: dexAddress,
+            data: encoded,
+            value: 0,
+            nonce: await web3.eth.getTransactionCount(from),
+            gasPrice: await web3.eth.getGasPrice(),
+            gasLimit: 1000000,
+            chainId: web3.eth.net.getId(),
+        };
+
+        // send raw transaction
+        let signed = await web3.eth.accounts.signTransaction(transaction, senderPrivateKey);
+        let receipt = await web3.eth.sendSignedTransaction(signed.rawTransaction);
+
+        // extract swap id from MakeSwap event
+        let event = await dex_contract.getPastEvents('MakeSwap', {from_block: 0, toBlock: 'latest'});
+        let swapId = event[0].returnValues.id;
+
+        return swapId;
+    }
+
+
+Open a swap with `make`
+=======================
+
+::
+
+    makeExampleSwap = async function() {
+
+        // components for the make-side of the swap
+        let make = [
+            // ERC1155 component (asset type 0)
+            {
+                tokenAddress: t.art,
+                tokenIds: [],
+                amounts: [],
+                assetType: 0
+            },
+            // ERC20 component (asset type 2)
+            {
+                tokenAddress: t.art,
+                tokenIds: [],
+                amounts: [],
+                assetType: 2
+            },
+            // ETHER component (asset type 3)
+            {
+                tokenAddress: '',
+                tokenIds: [],
+                amounts: [],
+                assetType: 3
+            },
+        ];
+
+        // components for the take-side of the swap
+        let take = [
+            // ERC721 component (asset type 1)
+            {
+                tokenAddress: t.art,
+                tokenIds: tokenIds,
+                amounts: [],
+                assetType: 1
+            }
+        ];
+
+        let swapId = await sendMakeTransaction(make, take, []);
+
+        console.log(swapId);
+    }
+
+
+Trade a swap with `take`
+========================
+
+::
+
+    takeExampleSwap = async function(swapId) {
+        // Calculate fee through the contract.
+        // If taker has enough NFT Protocol tokens, the fee is reduced or even waived.
+        let fee = await this.dex_contract.methods.fees().call({
+            from: takerAddress
+        });
+
+        // Check that the fee is within the expected range
+        assert(web3.utils.toBN(fee).lte(web3.utils.toBN('1000000000000000')),
+            'fee is higher than expected');
+
+        // Take the swap
+        let receipt = await dex_contract.methods.take(swapId).send({
+            from: takerAddress,
+            gas: 1000000,
+            value: fee
+        });
+
+        console.log(receipt);
+    }
+
+
+Inspect the traded swap
+=======================
+
+::
+
+    inspectExampleSwap = async function(swapId) {
+        let swap = await dex_contract.methods.swap(swapId).call({
+            from: makerAddress
+        });
+
+        console.log(swap);
+    }

@@ -1,0 +1,185 @@
+.. index:: ! concept
+
+.. _concept:
+
+#############
+Concept
+#############
+
+To facilitate a swap, an arbitrary Ethereum or Polygon account, called the `maker`,
+defines the swap through compiling a list of assets to sell (the maker side) and
+compiling a list of assets they want to buy in exchange (the taker side).
+
+During swap creation, the assets on the maker side are transfered from the `maker` to the DEX
+and are opened for exchange with another account, called the `taker`.
+
+.. figure:: _static/dex.png
+    :scale: 65 %
+    :alt: DEX diagram
+
+The contract resides on the Ethereum and Polygon main networks and are governed by a multisig account
+on each network to facilitate maintanace operations, e.g., fee structure changes,
+DEX shut downs and resumption in emergency situations.
+
+
+Define swaps and offer them for trade
+=====================================
+
+Swaps are created (or opened) by a `maker` account, which can be an arbitrary Ethereum account.
+Each swap consists of two sides, the maker side and the taker side.
+Each side represents a list of assets where each asset can be one of:
+
+* ERC1155 (Batch)
+* ERC721
+* ERC20
+* Ether
+
+In the DEX, an asset is described by the following values:
+
+#. `assetType` (`uint8`) - integer describing the type of the asset:
+
+   0 = ERC1155,
+   1 = ERC721,
+   2 = ERC20,
+   3 = Ether.
+
+#. `tokenAddress` (`address`) denoting the Ethereum or Polygon address of the asset token, for example:
+   "0xcB8d1260F9c92A3A545d409466280fFdD7AF7042".
+
+   For Ether, the `tokenAddress` field is ignored.
+
+#. `tokenIds` (`uint256[]`) denoting an array of token ids for ERC1155 and ERC721.
+
+   For ERC1155s, multiple values can be provided indicating a batch transfer.
+
+   For ERC721s, the `tokenIds` array holds one and only one value.
+
+   For ERC20s and Ether, the `tokenIds` field is ignored.
+
+#. `amounts` (`uint256[]`) denoting an array of amounts.
+
+   For ERC1155s, multiple values can be provided, indicating a batch transfer.
+   In this case, the size of the `amounts` array has to match the size of the `tokenIds` array.
+
+   For ERC20s, the `amounts` array holds one and only one value.
+
+   For ERC721s and Ether, the `amounts` array is ignored.
+
+
+Examples:
+
+* Trade an ERC721 for an ERC20
+
+  Make:
+
+  +-------------+---------------------------------------------+------------+-----------+
+  | `assetType` | `tokenAddress`                              | `tokenIds` | `amounts` |
+  +=============+=============================================+============+===========+
+  | 1           | 0x2Fb704d243cFA179fFaD4D87AcB1D36bcf243a44  | [123]      | []        |
+  +-------------+---------------------------------------------+------------+-----------+
+
+  Take:
+
+  +-------------+---------------------------------------------+------------+-----------+
+  | `assetType` | `tokenAddress`                              | `tokenIds` | `amounts` |
+  +=============+=============================================+============+===========+
+  | 2           | 0xcB8d1260F9c92A3A545d409466280fFdD7AF7042  | []         | [10]      |
+  +-------------+---------------------------------------------+------------+-----------+
+
+
+* Trade an ERC20 for Ether
+
+  Make:
+
+  +-------------+---------------------------------------------+------------+-----------+
+  | `assetType` | `tokenAddress`                              | `tokenIds` | `amounts` |
+  +=============+=============================================+============+===========+
+  | 2           | 0xcB8d1260F9c92A3A545d409466280fFdD7AF7042  | []         | [10]      |
+  +-------------+---------------------------------------------+------------+-----------+
+
+  Take:
+
+  +-------------+---------------------------------------------+------------+-----------+
+  | `assetType` | `tokenAddress`                              | `tokenIds` | `amounts` |
+  +=============+=============================================+============+===========+
+  | 3           | 0x0000000000000000000000000000000000000000  | []         | [1]       |
+  +-------------+---------------------------------------------+------------+-----------+
+
+* Trade a bundle of ERC1155 batch and ERC721 for Ether
+
+  Make:
+
+  +-------------+---------------------------------------------+------------+-----------+
+  | `assetType` | `tokenAddress`                              | `tokenIds` | `amounts` |
+  +=============+=============================================+============+===========+
+  | 0           | 0xFe9231f0e6753a8412a00eC1f0028A24d5220Ba9  | [1, 2, 3]  | [5, 4, 3] |
+  +-------------+---------------------------------------------+------------+-----------+
+  | 1           | 0x2Fb704d243cFA179fFaD4D87AcB1D36bcf243a44  | [5]        | []        |
+  +-------------+---------------------------------------------+------------+-----------+
+
+  Take:
+
+  +-------------+---------------------------------------------+------------+-----------+
+  | `assetType` | `tokenAddress`                              | `tokenIds` | `amounts` |
+  +=============+=============================================+============+===========+
+  | 3           | 0x0000000000000000000000000000000000000000  | []         | [3]       |
+  +-------------+---------------------------------------------+------------+-----------+
+
+
+Whitelisting
+============
+
+When opening a swap with `make`, a whitelist can be passed which contains a list of addresses
+that are exclusively permitted to take the swap.
+
+
+Taking swaps
+============
+
+Swaps can be executed by a taker account that is in possession of the funds
+that have been asked for by the swap maker. If a whitelist is provided at the time of `make`, then only
+accounts from the whitelist will be able to take the swap.
+
+
+Cancelling swaps
+================
+
+Open swaps can be cancelled anytime by the maker of the swap, and by providing a swap id.
+
+
+Fees
+====
+
+The DEX charges swap fees that are fully covered by the taker in Wei of Ether when the swap is executed.
+
+A flat fee is defined that is the same for every trade on the DEX.
+
+
+Fee discounts
+=============
+
+The DEX provides fee discounts for holders of `$NFT Protocol tokens`_, tradable on `Uniswap`_.
+
+.. _$NFT Protocol tokens: https://etherscan.io/token/0xcB8d1260F9c92A3A545d409466280fFdD7AF7042
+.. _Uniswap: https://v2.info.uniswap.org/token/0xcB8d1260F9c92A3A545d409466280fFdD7AF7042
+
+In particular, if a taker has a balance of NFT Protocol tokens at a low threshold (e.g., 10,000 tokens),
+then the DEX will provide a 10% discount on the fees.
+
+If a taker has a balance of NFT Protocol tokens at a high threshold (e.g., 100,000 tokens),
+then the DEX will bypass the fees entirely.
+
+
+Governance
+==========
+
+The DEX has a multisig administrator account that is able to perform the following governance tasks:
+
+1. Halt and resume the DEX in case of an emergency.
+
+2. Update the fee structure.
+
+3. Withdraw the fees from the DEX that were accumulated from the swap trades.
+
+4. Withdraw funds that were accidentally deposited into the DEX outside of the standard swap making operation, e.g.,
+   accidental mints and transfers of assets into the DEX.
