@@ -2,13 +2,14 @@
 
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract NFTProtocolDEX is ERC1155Holder {
+contract NFTProtocolDEX is ERC1155Holder, ReentrancyGuard {
     using SafeMath for uint256;
     using Address for address;
     using SafeERC20 for IERC20;
@@ -68,17 +69,17 @@ contract NFTProtocolDEX is ERC1155Holder {
     uint8 private constant LEFT = 0;
     uint8 private constant RIGHT = 1;
 
-    /// @dev Asset type 0 for ERC1155 swap components
+    /// @dev Asset type 0 for ERC1155 swap components.
     uint8 public constant ERC1155_ASSET = 0;
 
-    /// @dev Asset type 1 for ERC721 swap components
+    /// @dev Asset type 1 for ERC721 swap components.
     uint8 public constant ERC721_ASSET = 1;
 
-    /// @dev Asset type 2 for ERC20 swap components
+    /// @dev Asset type 2 for ERC20 swap components.
     uint8 public constant ERC20_ASSET = 2;
 
-    /// @dev Asset type 3 for ETH swap components
-    uint8 public constant ETH_ASSET = 3;
+    /// @dev Asset type 3 for ETHER swap components.
+    uint8 public constant ETHER_ASSET = 3;
 
     /// @dev Swap status 0 for swaps that are open and active.
     uint8 public constant OPEN_SWAP = 0;
@@ -89,7 +90,7 @@ contract NFTProtocolDEX is ERC1155Holder {
     /// @dev Swap status 2 for swaps that are dropped, ie. cancelled.
     uint8 public constant DROPPED_SWAP = 2;
 
-    // Structure representing a swap
+    // Swap structure.
     struct Swap {
         uint256 id;
         uint8 status;
@@ -110,21 +111,30 @@ contract NFTProtocolDEX is ERC1155Holder {
     /// @dev Map holding all swaps (including cancelled and executed swaps).
     mapping(uint256 => Swap) public swap;
 
-    // Id of the next available swap.
-    uint256 private swapsEnd;
+    // Total number of swaps in the database.
+    uint256 public size;
 
     /// @dev Map from swapId to whitelist of a swap.
     mapping(uint256 => mapping(address => bool)) public list;
 
-    // Map holding pending eth withdrawals
+    // Map holding pending eth withdrawals.
     mapping(address => uint256) private pendingWithdrawals;
 
-    // Maps to track the contract owned user balances in ETHER, ERC20, ERC721, and ERC1155 tokens.
+    // Maps to track the contract owned user balances for Ether.
     // The multisig account will not be able to withdraw assets that are owned by users.
     uint256 private usersEthBalance;
-    mapping(address => uint256) private users20Balances;
-    mapping(address => mapping(uint256 => bool)) private users721Ownerships;
-    mapping(address => mapping(uint256 => uint256)) private users1155Balances;
+
+    // Unlocked DEX function modifier.
+    modifier unlocked {
+        require(!locked, "DEX shut down");
+        _;
+    }
+
+    // Only msig caller function modifier.
+    modifier onlyMsig {
+        require(msg.sender == msig, "Unauthorized");
+        _;
+    }
 
     /// @dev Initializes the contract by setting the address of the NFT Protocol token
     /// and multisig (administrator) account.
@@ -153,49 +163,51 @@ contract NFTProtocolDEX is ERC1155Holder {
         Component[] calldata _make,
         Component[] calldata _take,
         address[] calldata _whitelist
-    ) external payable {
-        require(!locked, "DEX shut down");
-
-        // Prohibit multisig from making swap to maintain correct users balances
+    ) external payable nonReentrant unlocked {
+        // Prohibit multisig from making swap to maintain correct users balances.
         require(msg.sender != msig, "Multisig cannot make swap");
-
-        // Create swap entry and transfer assets to DEX
-        swap[swapsEnd].id = swapsEnd;
-        swap[swapsEnd].makerAddress = msg.sender;
         require(_take.length > 0, "Empty taker array");
-        for (uint256 i = 0; i < _take.length; i++) {
-            checkValues(_take[i]);
-            swap[swapsEnd].components[RIGHT].push(_take[i]);
-        }
-
-        // Transfer in maker assets
-        uint256 totalETH;
         require(_make.length > 0, "Empty maker array");
-        for (uint256 i = 0; i < _make.length; i++) {
-            swap[swapsEnd].components[LEFT].push(_make[i]);
-            totalETH += transferAssetIn(_make[i]);
-        }
-        require(msg.value >= totalETH, "Insufficient ETH");
 
-        // Add eth to users deposited total eth balance
+        // Check all values before changing state.
+        checkAssets(_take);
+        uint256 totalEther = checkAssets(_make);
+        require(msg.value >= totalEther, "Insufficient ETH");
+
+        // Initialize whitelist mapping for this swap.
+        swap[size].whitelistEnabled = _whitelist.length > 0;
+        for (uint256 i = 0; i < _whitelist.length; i++) {
+            list[size][_whitelist[i]] = true;
+        }
+
+        // Create swap entry and transfer assets to DEX.
+        swap[size].id = size;
+        swap[size].makerAddress = msg.sender;
+        for (uint256 i = 0; i < _take.length; i++) {
+            swap[size].components[RIGHT].push(_take[i]);
+        }
+        for (uint256 i = 0; i < _make.length; i++) {
+            swap[size].components[LEFT].push(_make[i]);
+        }
+
+        // Account for Ether from this message.
         usersEthBalance += msg.value;
 
-        // Credit excess eth back to the sender
-        if (msg.value > totalETH) {
-            pendingWithdrawals[msg.sender] += msg.value - totalETH;
+        // Credit excess Ether back to the sender.
+        if (msg.value > totalEther) {
+            pendingWithdrawals[msg.sender] += msg.value - totalEther;
         }
 
-        // Initialize whitelist mapping for this swap
-        swap[swapsEnd].whitelistEnabled = _whitelist.length > 0;
-        for (uint256 i = 0; i < _whitelist.length; i++) {
-            list[swapsEnd][_whitelist[i]] = true;
+        // Add swap.
+        size += 1;
+
+        // Transfer in maker assets.
+        for (uint256 i = 0; i < _make.length; i++) {
+            transferAsset(_make[i], msg.sender, address(this));
         }
 
-        // Issue event
-        emit MakeSwap(_make, _take, msg.sender, _whitelist, swapsEnd);
-
-        // Add swap
-        swapsEnd += 1;
+        // Issue event.
+        emit MakeSwap(_make, _take, msg.sender, _whitelist, size - 1);
     }
 
     /// @dev Takes a swap that is currently open.
@@ -210,47 +222,46 @@ contract NFTProtocolDEX is ERC1155Holder {
     /// the message of this contract call.
     ///
     /// @param _swapId id of the swap to be taken.
-    function take(uint256 _swapId) external payable {
-        require(!locked, "DEX shut down");
-
-        // Prohibit multisig from taking swap to maintain correct users balances
+    function take(uint256 _swapId) external payable nonReentrant unlocked {
+        // Prohibit multisig from taking swap to maintain correct users balances.
         require(msg.sender != msig, "Multisig cannot take swap");
 
-        // Get SwapData from the swap hash
-        require(_swapId < swapsEnd, "Invalid swapId");
+        // Get SwapData from the swap hash.
+        require(_swapId < size, "Invalid swapId");
         Swap memory swp = swap[_swapId];
-        require(swp.status == OPEN_SWAP, "Swap is not open");
+        require(swp.status == OPEN_SWAP, "Swap not open");
 
-        // Check if address attempting to fulfill swap is authorized in the whitelist
+        // Check if address attempting to fulfill swap is authorized in the whitelist.
         require(!swp.whitelistEnabled || list[_swapId][msg.sender], "Not whitelisted");
 
-        // Close out swap
+        // Determine how much total Ether has to be provided by the sender, including fees.
+        uint256 totalEther = checkAssets(swp.components[RIGHT]);
+        uint256 fee = fees();
+        require(msg.value >= totalEther + fee, "Insufficient ETH (price+fee)");
+
+        // Close out swap.
         swap[_swapId].status = CLOSED_SWAP;
         swap[_swapId].takerAddress = msg.sender;
 
-        // Transfer assets from DEX to taker
+        // Account for Ether from this message.
+        usersEthBalance += totalEther;
+
+        // Credit excess eth back to the sender.
+        if (msg.value > totalEther + fee) {
+            pendingWithdrawals[msg.sender] += msg.value - totalEther - fee;
+        }
+
+        // Transfer assets from DEX to taker.
         for (uint256 i = 0; i < swp.components[LEFT].length; i++) {
             transferAsset(swp.components[LEFT][i], address(this), msg.sender);
         }
 
-        // Transfer assets from taker to maker
-        uint256 totalETH;
+        // Transfer assets from taker to maker.
         for (uint256 i = 0; i < swp.components[RIGHT].length; i++) {
-            totalETH += transferAsset(swp.components[RIGHT][i], msg.sender, swp.makerAddress);
+            transferAsset(swp.components[RIGHT][i], msg.sender, swp.makerAddress);
         }
 
-        // Fees
-        uint256 fee = fees();
-        require(msg.value >= totalETH + fee, "Insufficient ETH (price+fee)");
-
-        // Add eth to users deposited total eth balance
-        usersEthBalance += totalETH;
-
-        // Credit excess eth back to the sender
-        if (msg.value > totalETH + fee) {
-            pendingWithdrawals[msg.sender] += msg.value - totalETH - fee;
-        }
-
+        // Issue event.
         emit TakeSwap(_swapId, msg.sender, fee);
     }
 
@@ -264,19 +275,20 @@ contract NFTProtocolDEX is ERC1155Holder {
     /// Only swaps that are currently open can be dropped.
     ///
     /// @param _swapId id of the swap to be dropped.
-    function drop(uint256 _swapId) public {
-        require(!locked, "DEX shut down");
-
+    function drop(uint256 _swapId) public nonReentrant unlocked {
         Swap memory swp = swap[_swapId];
         require(msg.sender == swp.makerAddress, "Not swap maker");
-        require(swap[_swapId].status == OPEN_SWAP, "Swap is not open");
+        require(swap[_swapId].status == OPEN_SWAP, "Swap not open");
+
+        // Drop swap.
         swap[_swapId].status = DROPPED_SWAP;
 
-        // Transfer assets back to maker
-        for (uint256 i = 0; i < swp.components[0].length; i++) {
+        // Transfer assets back to maker.
+        for (uint256 i = 0; i < swp.components[LEFT].length; i++) {
             transferAsset(swp.components[LEFT][i], address(this), swp.makerAddress);
         }
 
+        // Issue event.
         emit DropSwap(_swapId);
     }
 
@@ -286,23 +298,18 @@ contract NFTProtocolDEX is ERC1155Holder {
     }
 
     /// @dev Withdraw ETHER funds from the contract, see :sol:func:`pend`.
-    function pull() external {
+    function pull() external nonReentrant {
         uint256 amount = pendingWithdrawals[msg.sender];
         pendingWithdrawals[msg.sender] = 0;
         if (msg.sender != msig) {
-            // Underflow should never happen, and is handled by SafeMath if it does
+            // Underflow should never happen and is handled by SafeMath if it does.
             usersEthBalance -= amount;
         }
-        payable(msg.sender).transfer(amount);
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success, "Ether transfer failed");
     }
 
-    /// @dev Total number of swaps in the DEX.
-    /// @return total number of swaps in the database.
-    function size() public view returns (uint256) {
-        return swapsEnd;
-    }
-
-    /// @dev Calculate the fee owed for a trade
+    /// @dev Calculate the fee owed for a trade.
     /// This function is usually called by the taker to determine the amount of ETH
     /// that has to be paid for a trade.
     /// @return fees in WEI of ETHER to be paid by the caller as a taker.
@@ -314,13 +321,13 @@ contract NFTProtocolDEX is ERC1155Holder {
         if (balance < felo) {
             return flat;
         }
-        // Take 10% off as soon as feeBypassLow is reached
+        // Take 10% off as soon as feeBypassLow is reached.
         uint256 startFee = (flat * 9) / 10;
         return startFee - (startFee * (balance - felo)) / (fehi - felo);
     }
 
     /// @dev Governance votes to set fees.
-    /// @param _flatFee flat fee in WEI of ETHER that has to be paid for a trade
+    /// @param _flatFee flat fee in WEI of ETHER that has to be paid for a trade,
     /// if the taker has less than `_feeBypassLow` NFT Protocol tokens in its account.
     /// @param _feeBypassLow threshold of NFT Protocol tokens to be held by a swap taker in order to get a 10% fee discount.
     /// @param _feeBypassHigh threshold of NFT Protocol tokens to be held by a swap taker in order to pay no fees.
@@ -328,12 +335,13 @@ contract NFTProtocolDEX is ERC1155Holder {
         uint256 _flatFee,
         uint256 _feeBypassLow,
         uint256 _feeBypassHigh
-    ) external {
-        require(msg.sender == msig, "Unauthorized");
+    ) external onlyMsig {
         require(_feeBypassLow <= _feeBypassHigh, "bypassLow must be <= bypassHigh");
+
         flat = _flatFee;
         felo = _feeBypassLow;
         fehi = _feeBypassHigh;
+
         emit Vote(_flatFee, _feeBypassLow, _feeBypassHigh);
     }
 
@@ -342,8 +350,7 @@ contract NFTProtocolDEX is ERC1155Holder {
     /// Only the :sol:func:`msig` will be able to call this function successfully.
     ///
     /// @param _locked `true` to lock down the DEX, `false` to unlock the DEX.
-    function lock(bool _locked) external {
-        require(msg.sender == msig, "Unauthorized");
+    function lock(bool _locked) external onlyMsig {
         locked = _locked;
     }
 
@@ -352,60 +359,9 @@ contract NFTProtocolDEX is ERC1155Holder {
     /// Only the :sol:func:`msig` will be able to call this function successfully.
     ///
     /// @param _to address of the new multisig/admin account
-    function auth(address _to) external {
+    function auth(address _to) external onlyMsig {
         require(_to != address(0x0), "Cannot set to zero address");
-        require(msg.sender == msig, "Unauthorized");
         msig = _to;
-    }
-
-    /// Rescue ERC1155 NFTs stuck on the DEX, e.g., that have been sent to the DEX accidentally.
-    ///
-    /// Only the :sol:func:`msig` will be able to call this function successfully.
-    ///
-    /// @param _nft address of the ERC1155 token contract.
-    /// @param _ids array of tokenIds to extract.
-    function snag(address _nft, uint256[] calldata _ids) external {
-        require(msg.sender == msig, "Unauthorized");
-        address[] memory accounts = new address[](_ids.length);
-        for (uint256 i = 0; i < _ids.length; i++) {
-            accounts[i] = address(this);
-        }
-        IERC1155 nft1155 = IERC1155(_nft);
-        uint256[] memory balances = nft1155.balanceOfBatch(accounts, _ids);
-        for (uint256 i = 0; i < balances.length; i++) {
-            uint256 userBalance = users1155Balances[_nft][_ids[i]];
-            // Underflow should never happen, and is handled by SafeMath if it does
-            balances[i] -= userBalance;
-        }
-        nft1155.safeBatchTransferFrom(address(this), msg.sender, _ids, balances, "");
-    }
-
-    /// @dev Rescue ERC721 NFTs stuck on the DEX, e.g., that have been sent to the DEX accidentally.
-    ///
-    /// Only the :sol:func:`msig` account will be able to call this function successfully.
-    ///
-    /// @param _nft address of the ERC721 token contract.
-    /// @param _id id of the token to extract.
-    function pick(address _nft, uint256 _id) external {
-        require(msg.sender == msig, "Unauthorized");
-        require(users721Ownerships[_nft][_id] == false, "NFT owned by a user");
-        IERC721(_nft).safeTransferFrom(address(this), msg.sender, _id);
-    }
-
-    /// @dev Rescue ERC20 tokens stuck on DEX, e.g., that have been sent to the DEX accidentally.
-    ///
-    /// Only the :sol:func:`msig` account will be able to call this function successfully.
-    ///
-    /// @param _token address of the ERC20 token contract.
-    function grab(address _token) external {
-        require(msg.sender == msig, "Unauthorized");
-        uint256 balance = IERC20(_token).balanceOf(address(this));
-        uint256 usersBalance = users20Balances[_token];
-
-        // Make sure multisig cannot pull tokens that have been deposited earlier by another user via make
-        require(balance > usersBalance, "No tokens available");
-
-        IERC20(_token).safeTransfer(msg.sender, balance - usersBalance);
     }
 
     /// @dev Rescue ETHER funds from the DEX that do not belong the a user, e.g., fees and ETHER that have been sent to the DEX accidentally.
@@ -416,131 +372,60 @@ contract NFTProtocolDEX is ERC1155Holder {
     /// The user funds that were transfered to the DEX through :sol:func:`make` are protected and cannot be extracted.
     ///
     /// Only the :sol:func:`msig` account will be able to call this function successfully.
-    function lift() external {
-        require(msg.sender == msig, "Unauthorized");
+    function lift() external onlyMsig {
         uint256 amount = address(this).balance;
-        // Underflow should never happen, and is handled by SafeMath if it does
+        // Underflow should never happen and is handled by SafeMath if it does.
         pendingWithdrawals[msg.sender] = amount - usersEthBalance;
     }
 
-    // Batch transfer ERC1155 NFT
-    function transfer1155(
-        Component memory _comp,
-        address _from,
-        address _to
-    ) internal {
-        checkEqualLength(_comp);
-        IERC1155 nft = IERC1155(_comp.tokenAddress);
-        nft.safeBatchTransferFrom(_from, _to, _comp.tokenIds, _comp.amounts, "");
-    }
-
-    // Transfer ERC721 NFT
-    function transfer721(
-        Component memory _comp,
-        address _from,
-        address _to
-    ) internal {
-        checkSingleTokenId(_comp);
-        IERC721 nft = IERC721(_comp.tokenAddress);
-        nft.transferFrom(_from, _to, _comp.tokenIds[0]);
-    }
-
-    // Transfer ERC20
-    function transfer20(
-        Component memory _comp,
-        address _from,
-        address _to
-    ) internal {
-        checkSingleAmount(_comp);
-        IERC20 coin = IERC20(_comp.tokenAddress);
-        uint256 amount = _comp.amounts[0];
-        coin.transferFrom(_from, _to, amount);
-    }
-
-    // Transfer asset from a user into the DEX.
-    function transferAssetIn(Component memory _comp) internal returns (uint256) {
-        if (_comp.assetType == ERC1155_ASSET) {
-            transfer1155(_comp, msg.sender, address(this));
-            users1155Balances[_comp.tokenAddress][_comp.tokenIds[0]] += _comp.amounts[0];
-        } else if (_comp.assetType == ERC721_ASSET) {
-            transfer721(_comp, msg.sender, address(this));
-            users721Ownerships[_comp.tokenAddress][_comp.tokenIds[0]] = true;
-        } else if (_comp.assetType == ERC20_ASSET) {
-            transfer20(_comp, msg.sender, address(this));
-            users20Balances[_comp.tokenAddress] += _comp.amounts[0];
-        } else if (_comp.assetType == ETH_ASSET) {
-            checkSingleAmount(_comp);
-            return _comp.amounts[0];
-        } else {
-            revert("Invalid asset type");
-        }
-
-        return 0;
-    }
-
-    // Transfer asset from one user to another, or into the DEX.
+    // Transfer asset from one account to another.
     function transferAsset(
         Component memory _comp,
         address _from,
         address _to
-    ) internal returns (uint256) {
+    ) internal {
+        // All component checks were conducted before.
         if (_comp.assetType == ERC1155_ASSET) {
-            transfer1155(_comp, _from, _to);
+            IERC1155 nft = IERC1155(_comp.tokenAddress);
+            nft.safeBatchTransferFrom(_from, _to, _comp.tokenIds, _comp.amounts, "");
         } else if (_comp.assetType == ERC721_ASSET) {
-            transfer721(_comp, _from, _to);
+            IERC721 nft = IERC721(_comp.tokenAddress);
+            nft.transferFrom(_from, _to, _comp.tokenIds[0]);
         } else if (_comp.assetType == ERC20_ASSET) {
-            transfer20(_comp, _from, _to);
+            IERC20 coin = IERC20(_comp.tokenAddress);
+            coin.safeTransferFrom(_from, _to, _comp.amounts[0]);
         } else {
-            checkSingleAmount(_comp);
+            // Ether, single length amounts array was checked before.
             pendingWithdrawals[_to] += _comp.amounts[0];
-            return _comp.amounts[0];
         }
-
-        if (_from == address(this) && _from != _to) {
-            reduceUsersFunds(_comp);
-        }
-
-        return 0;
-    }
-
-    //
-    function reduceUsersFunds(Component memory _comp) internal {
-        if (_comp.assetType == ERC1155_ASSET) {
-            users1155Balances[_comp.tokenAddress][_comp.tokenIds[0]] -= _comp.amounts[0];
-        } else if (_comp.assetType == ERC721_ASSET) {
-            users721Ownerships[_comp.tokenAddress][_comp.tokenIds[0]] = false;
-        } else {
-            users20Balances[_comp.tokenAddress] -= _comp.amounts[0];
-        }
-    }
-
-    // Check for tokenIds array length 1, as required for ERC721.
-    function checkSingleTokenId(Component memory _comp) internal pure {
-        require(_comp.tokenIds.length == 1, "TokenIds array length must be 1");
-    }
-
-    // Check for amounts array length 1, as required for ERC20 and ETH.
-    function checkSingleAmount(Component memory _comp) internal pure {
-        require(_comp.amounts.length == 1, "Amounts array length must be 1");
-    }
-
-    // Check equal length of tokenIds and amounts arrays, as required for ERC1155.
-    function checkEqualLength(Component memory _comp) internal pure {
-        require(_comp.tokenIds.length == _comp.amounts.length, "TokenIds and amounts len differ");
     }
 
     // Check asset type and array sizes within a component.
-    function checkValues(Component memory _comp) internal pure {
+    function checkAsset(Component memory _comp) internal pure returns (uint256) {
         if (_comp.assetType == ERC1155_ASSET) {
-            checkEqualLength(_comp);
+            require(
+                _comp.tokenIds.length == _comp.amounts.length,
+                "TokenIds and amounts len differ"
+            );
         } else if (_comp.assetType == ERC721_ASSET) {
-            checkSingleTokenId(_comp);
+            require(_comp.tokenIds.length == 1, "TokenIds array length must be 1");
         } else if (_comp.assetType == ERC20_ASSET) {
-            checkSingleAmount(_comp);
-        } else if (_comp.assetType == ETH_ASSET) {
-            checkSingleAmount(_comp);
+            require(_comp.amounts.length == 1, "Amounts array length must be 1");
+        } else if (_comp.assetType == ETHER_ASSET) {
+            require(_comp.amounts.length == 1, "Amounts array length must be 1");
+            return _comp.amounts[0];
         } else {
             revert("Invalid asset type");
         }
+        return 0;
+    }
+
+    // Check all assets in a component array.
+    function checkAssets(Component[] memory _assets) internal pure returns (uint256) {
+        uint256 totalEther = 0;
+        for (uint256 i = 0; i < _assets.length; i++) {
+            totalEther += checkAsset(_assets[i]);
+        }
+        return totalEther;
     }
 }
