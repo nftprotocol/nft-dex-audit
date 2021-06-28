@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract NFTProtocolDEX is ERC1155Holder, ReentrancyGuard {
+contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
     using SafeMath for uint256;
     using Address for address;
     using SafeERC20 for IERC20;
@@ -143,6 +144,7 @@ contract NFTProtocolDEX is ERC1155Holder, ReentrancyGuard {
     constructor(address _nftProtocolToken, address _multisig) {
         msig = _multisig;
         nftProtocolTokenAddress = _nftProtocolToken;
+        emit Vote(flat, felo, fehi);
     }
 
     /// @dev Opens a swap with a list of assets on the maker side (_make) and on the taker side (_take).
@@ -275,7 +277,7 @@ contract NFTProtocolDEX is ERC1155Holder, ReentrancyGuard {
     /// Only swaps that are currently open can be dropped.
     ///
     /// @param _swapId id of the swap to be dropped.
-    function drop(uint256 _swapId) public nonReentrant unlocked {
+    function drop(uint256 _swapId) external nonReentrant unlocked {
         Swap memory swp = swap[_swapId];
         require(msg.sender == swp.makerAddress, "Not swap maker");
         require(swap[_swapId].status == OPEN_SWAP, "Swap not open");
@@ -390,10 +392,15 @@ contract NFTProtocolDEX is ERC1155Holder, ReentrancyGuard {
             nft.safeBatchTransferFrom(_from, _to, _comp.tokenIds, _comp.amounts, "");
         } else if (_comp.assetType == ERC721_ASSET) {
             IERC721 nft = IERC721(_comp.tokenAddress);
-            nft.transferFrom(_from, _to, _comp.tokenIds[0]);
+            nft.safeTransferFrom(_from, _to, _comp.tokenIds[0]);
         } else if (_comp.assetType == ERC20_ASSET) {
             IERC20 coin = IERC20(_comp.tokenAddress);
-            coin.safeTransferFrom(_from, _to, _comp.amounts[0]);
+            uint256 amount = _comp.amounts[0];
+            if (_from == address(this)) {
+                coin.safeTransfer(_to, amount);
+            } else {
+                coin.safeTransferFrom(_from, _to, amount);
+            }
         } else {
             // Ether, single length amounts array was checked before.
             pendingWithdrawals[_to] += _comp.amounts[0];
