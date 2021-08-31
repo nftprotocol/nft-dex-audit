@@ -20,7 +20,7 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
     /// @param take array of swap components on the taker side, see :sol:struct:`Component`.
     /// @param whitelist array of addresses that are allowed to take the swap.
     /// @param id id of the swap.
-    event MakeSwap(
+    event SwapMade(
         Component[] make,
         Component[] take,
         address indexed makerAddress,
@@ -32,11 +32,11 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
     /// @param swapId id of the swap that was taken.
     /// @param takerAddress address of the account that executed the swap.
     /// @param fee WEI of ETHER that was paid for the swap.
-    event TakeSwap(uint256 swapId, address takerAddress, uint256 fee);
+    event SwapTaken(uint256 swapId, address takerAddress, uint256 fee);
 
     /// @dev Emitted when a swap was dropped, ie. cancelled.
     /// @param swapId id of the dropped swap.
-    event DropSwap(uint256 swapId);
+    event SwapDropped(uint256 swapId);
 
     /// @dev Emitted when fee parameters have changed, see :sol:func:`vote`, :sol:func:`fees`.
     /// @param flatFee fee to be paid by a swap taker in WEI of ETHER.
@@ -110,7 +110,7 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
     }
 
     /// @dev Map holding all swaps (including cancelled and executed swaps).
-    mapping(uint256 => Swap) public swap;
+    mapping(uint256 => Swap) private swaps;
 
     // Total number of swaps in the database.
     uint256 public size;
@@ -155,7 +155,7 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
     /// If the maker list contains ETHER assets, then the total ETHER funds have to be sent along with
     /// the message of this contract call.
     ///
-    /// Emits a :sol:event:`MakeSwap` event.
+    /// Emits a :sol:event:`SwapMade` event.
     ///
     /// @param _make array of components for the maker side of the swap.
     /// @param _take array of components for the taker side of the swap.
@@ -177,19 +177,19 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
         require(msg.value >= totalEther, "Insufficient ETH");
 
         // Initialize whitelist mapping for this swap.
-        swap[size].whitelistEnabled = _whitelist.length > 0;
+        swaps[size].whitelistEnabled = _whitelist.length > 0;
         for (uint256 i = 0; i < _whitelist.length; i++) {
             list[size][_whitelist[i]] = true;
         }
 
         // Create swap entry and transfer assets to DEX.
-        swap[size].id = size;
-        swap[size].makerAddress = msg.sender;
+        swaps[size].id = size;
+        swaps[size].makerAddress = msg.sender;
         for (uint256 i = 0; i < _take.length; i++) {
-            swap[size].components[RIGHT].push(_take[i]);
+            swaps[size].components[RIGHT].push(_take[i]);
         }
         for (uint256 i = 0; i < _make.length; i++) {
-            swap[size].components[LEFT].push(_make[i]);
+            swaps[size].components[LEFT].push(_make[i]);
         }
 
         // Account for Ether from this message.
@@ -209,7 +209,7 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
         }
 
         // Issue event.
-        emit MakeSwap(_make, _take, msg.sender, _whitelist, size - 1);
+        emit SwapMade(_make, _take, msg.sender, _whitelist, size - 1);
     }
 
     /// @dev Takes a swap that is currently open.
@@ -230,7 +230,7 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
 
         // Get SwapData from the swap hash.
         require(_swapId < size, "Invalid swapId");
-        Swap memory swp = swap[_swapId];
+        Swap memory swp = swaps[_swapId];
         require(swp.status == OPEN_SWAP, "Swap not open");
 
         // Check if address attempting to fulfill swap is authorized in the whitelist.
@@ -242,8 +242,8 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
         require(msg.value >= totalEther + fee, "Insufficient ETH (price+fee)");
 
         // Close out swap.
-        swap[_swapId].status = CLOSED_SWAP;
-        swap[_swapId].takerAddress = msg.sender;
+        swaps[_swapId].status = CLOSED_SWAP;
+        swaps[_swapId].takerAddress = msg.sender;
 
         // Account for Ether from this message.
         usersEthBalance += totalEther;
@@ -264,7 +264,7 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
         }
 
         // Issue event.
-        emit TakeSwap(_swapId, msg.sender, fee);
+        emit SwapTaken(_swapId, msg.sender, fee);
     }
 
     /// @dev Cancel a swap and return the assets on the maker side back to the maker.
@@ -278,12 +278,12 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
     ///
     /// @param _swapId id of the swap to be dropped.
     function drop(uint256 _swapId) external nonReentrant unlocked {
-        Swap memory swp = swap[_swapId];
+        Swap memory swp = swaps[_swapId];
         require(msg.sender == swp.makerAddress, "Not swap maker");
-        require(swap[_swapId].status == OPEN_SWAP, "Swap not open");
+        require(swaps[_swapId].status == OPEN_SWAP, "Swap not open");
 
         // Drop swap.
-        swap[_swapId].status = DROPPED_SWAP;
+        swaps[_swapId].status = DROPPED_SWAP;
 
         // Transfer assets back to maker.
         for (uint256 i = 0; i < swp.components[LEFT].length; i++) {
@@ -291,7 +291,7 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
         }
 
         // Issue event.
-        emit DropSwap(_swapId);
+        emit SwapDropped(_swapId);
     }
 
     /// @dev WEI of ETHER that can be withdrawn by a user, see :sol:func:`pull`.
@@ -309,6 +309,13 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
         }
         (bool success, ) = msg.sender.call{value: amount}("");
         require(success, "Ether transfer failed");
+    }
+
+    /// @dev Get a swap, including cancelled and executed swaps.
+    /// @param _swapId id of the swap.
+    /// @return swap struct.
+    function swap(uint256 _swapId) public view returns (Swap memory) {
+        return swaps[_swapId];
     }
 
     /// @dev Calculate the fee owed for a trade.
