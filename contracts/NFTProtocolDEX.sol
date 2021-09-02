@@ -315,6 +315,7 @@ contract NFTProtocolDEX is ERC1155Holder, ERC721Holder, ReentrancyGuard {
     /// @param _swapId id of the swap.
     /// @return swap struct.
     function swap(uint256 _swapId) public view returns (Swap memory) {
+        require(_swapId < size, "Invalid swapId");
         return swaps[_swapId];
     }
 
