@@ -1,9 +1,0 @@
-.. index:: ! addresses
-
-.. _addresses:
-
-############
-Addresses
-############
-
-[TBD]
