@@ -298,10 +298,10 @@ contract NFTProtocolDEX is
      * @dev This function requires the swap to be defined and open.
      */
     function requireCanTakeSwapWith(address sender_, uint256 swapID_) public view override unlocked validSwap(swapID_) {
-        (Swap storage swp, uint256 value, , ) = _takerSwapAndValues(sender_, swapID_, 0);
-        _requireComponents(swp.components[TAKER_SIDE], sender_, value);
+        (Swap storage swp, , , ) = _takerSwapAndValues(sender_, swapID_, 0);
+        _requireComponents(swp.components[TAKER_SIDE], sender_, true);
         if (!swp.custodial) {
-            _requireComponents(swp.components[MAKER_SIDE], swp.maker, 0);
+            _requireComponents(swp.components[MAKER_SIDE], swp.maker, false);
         }
     }
 
@@ -315,19 +315,19 @@ contract NFTProtocolDEX is
     /**
      * @inheritdoc INFTProtocolDEX
      */
-    function requireMakerAssets(uint256 swapID) public view override unlocked validSwap(swapID) {
+    function requireMakerAssets(uint256 swapID) external view override unlocked validSwap(swapID) {
         Swap memory swp = _swaps[swapID];
         require(swp.status == OPEN_SWAP, "Swap not open");
         require(!swp.custodial, "Swap custodial");
-        _requireComponents(swp.components[MAKER_SIDE], swp.maker, 0);
+        _requireComponents(swp.components[MAKER_SIDE], swp.maker, false);
     }
 
     /**
      * @inheritdoc INFTProtocolDEX
      */
     function requireTakerAssetsWith(address sender_, uint256 swapID_) public view override unlocked validSwap(swapID_) {
-        (Swap storage swp, uint256 value, , ) = _takerSwapAndValues(sender_, swapID_, 0);
-        _requireComponents(swp.components[TAKER_SIDE], sender_, value);
+        (Swap storage swp, , , ) = _takerSwapAndValues(sender_, swapID_, 0);
+        _requireComponents(swp.components[TAKER_SIDE], sender_, true);
     }
 
     /**
@@ -628,11 +628,11 @@ contract NFTProtocolDEX is
     function _requireComponents(
         Component[] memory comps,
         address wallet,
-        uint256 value
+        bool includeEther
     ) internal view {
         for (uint256 i = 0; i < comps.length; i++) {
-            if (value > 0 || comps[i].assetType != ETHER_ASSET) {
-                _requireAssets(comps[i], wallet, value);
+            if (includeEther || comps[i].assetType != ETHER_ASSET) {
+                _requireAssets(comps[i], wallet, 0);
             }
         }
     }
@@ -643,7 +643,7 @@ contract NFTProtocolDEX is
     function _requireAssets(
         Component memory comp,
         address wallet,
-        uint256 value
+        uint256 sentValue
     ) internal view {
         if (comp.assetType == ERC1155_ASSET) {
             _requireERC1155Assets(comp, wallet);
@@ -652,7 +652,7 @@ contract NFTProtocolDEX is
         } else if (comp.assetType == ERC20_ASSET) {
             _requireERC20Asset(comp, wallet);
         } else {
-            _requireEther(comp, wallet, value);
+            _requireSufficientValue(comp, wallet, sentValue);
         }
     }
 
@@ -715,18 +715,20 @@ contract NFTProtocolDEX is
 
     /**
      * Checks a required Ether value against a wallet balances and sent value.
+     * This function ignores transaction (gas) and taker fees.
      */
-    function _requireEther(
+    function _requireSufficientValue(
         Component memory comp,
         address wallet,
-        uint256 value
+        uint256 sentValue
     ) internal view {
         uint256 balance_ = _balances[wallet];
-        require(wallet.balance + balance_ >= comp.amounts[0] + value, "Insufficient Ether value");
+        require(wallet.balance + balance_ + sentValue >= comp.amounts[0], "Insufficient Ether value");
     }
 
     /**
      * Checks components against the balance of a sender, the sent value, and a fee.
+     * This function ignores transaction (gas) fees.
      */
     function _requiredValue(
         address sender,
