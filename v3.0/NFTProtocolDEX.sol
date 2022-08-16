@@ -28,17 +28,17 @@ contract NFTProtocolDEX is
     /**
      * @inheritdoc INFTProtocolDEX
      */
-    string public name = "NFTProtocolDEX";
+    string public constant name = "NFTProtocolDEX";
 
     /**
      * @inheritdoc INFTProtocolDEX
      */
-    uint16 public immutable majorVersion = 3;
+    uint16 public constant majorVersion = 3;
 
     /**
      * @inheritdoc INFTProtocolDEX
      */
-    uint16 public immutable minorVersion = 0;
+    uint16 public constant minorVersion = 0;
 
     /**
      * @inheritdoc INFTProtocolDEX
@@ -168,9 +168,10 @@ contract NFTProtocolDEX is
      * - in `locked` mode, see :sol:func:locked,
      * - to the contract administrator, see :sol:func:owner.
      */
-    function takeSwap(uint256 swapID_) external payable override unlocked notOwner nonReentrant {
+    function takeSwap(uint256 swapID_, uint256 seqNum_) external payable override unlocked notOwner nonReentrant {
         address sender = _msgSender();
         (Swap storage swp, uint256 pay, uint256 updated, uint256 fee) = _takerSwapAndValues(sender, swapID_, msg.value);
+        require(swp.seqNum == seqNum_, "Wrong seqNum");
         require(msg.value >= pay, "Insufficient Ether value (price + fee)");
 
         // Close out swap.
@@ -195,7 +196,7 @@ contract NFTProtocolDEX is
         tvl -= fee;
 
         // Issue events.
-        emit SwapTaken(swapID_, sender, fee);
+        emit SwapTaken(swapID_, swp.seqNum, sender, fee);
         emit Deposited(owner(), fee);
     }
 
@@ -263,8 +264,11 @@ contract NFTProtocolDEX is
         // Update tvl.
         tvl += msg.value;
 
+        // Update seqNum.
+        swp.seqNum += 1;
+
         // Issue event.
-        emit SwapEtherAmended(swapID_, side_, index, previous, value_);
+        emit SwapEtherAmended(swapID_, swp.seqNum, side_, index, previous, value_);
     }
 
     /**

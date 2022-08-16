@@ -25,6 +25,7 @@ interface INFTProtocolDEX {
         bool whitelist;
         bool custodial;
         uint256 expiration;
+        uint256 seqNum;
     }
 
     /**
@@ -151,9 +152,13 @@ interface INFTProtocolDEX {
      * If the taker list contains ETHER assets, then the total ETHER value also has to be added in WEI to the value that is sent along with
      * the message of this contract call.
      *
-     * @param swapID_ id of the swap to be taken.
+     * This function requires the caller to provide the most recent sequence number of the swap, which only changes when
+     * the swap ether component is updated. The sequence number is used to prevent mempool front-running attacks.
+     *
+     * @param swapID_ ID of the swap to be taken.
+     * @param seqNum_ Most recent sequence number of the swap.
      */
-    function takeSwap(uint256 swapID_) external payable;
+    function takeSwap(uint256 swapID_, uint256 seqNum_) external payable;
 
     /**
      * Drop a swap and return the assets on the maker side back to the maker.
@@ -344,10 +349,11 @@ interface INFTProtocolDEX {
      * Emitted when a swap was executed, see :sol:func:`takeSwap`.
      *
      * @param swapID ID of the swap that was taken.
+     * @param seqNum Sequence number of the swap.
      * @param taker Address of the account that executed the swap.
      * @param fee Fee value in Wei of Ether paid by the swap taker.
      */
-    event SwapTaken(uint256 indexed swapID, address indexed taker, uint256 fee);
+    event SwapTaken(uint256 indexed swapID, uint256 seqNum, address indexed taker, uint256 fee);
 
     /**
      * Emitted when a swap was dropped, ie. cancelled.
@@ -360,12 +366,20 @@ interface INFTProtocolDEX {
      * Emitted when a Ether component of a swap was amended, see :sol:func:`amendSwapEther`.
      *
      * @param swapID ID of the swap.
+     * @param seqNum New sequence number of the swap.
      * @param side Swap side, either MAKER_SIDE or TAKER_SIDE.
      * @param index Index of the amended or added Ether component in the components array.
      * @param from Previous amount of Ether in Wei.
      * @param to Updated amount of Ether in Wei.
      */
-    event SwapEtherAmended(uint256 indexed swapID, uint8 indexed side, uint256 index, uint256 from, uint256 to);
+    event SwapEtherAmended(
+        uint256 indexed swapID,
+        uint256 seqNum,
+        uint8 indexed side,
+        uint256 index,
+        uint256 from,
+        uint256 to
+    );
 
     /**
      * Emitted when the flat fee parameters have changed, see :sol:func:`setFees`.
