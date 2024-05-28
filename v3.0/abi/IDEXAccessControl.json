@@ -1,0 +1,89 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IDEXAccessControl",
+  "sourceName": "contracts/interface/IDEXAccessControl.sol",
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "deprecated_",
+          "type": "bool"
+        }
+      ],
+      "name": "Deprecated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "locked_",
+          "type": "bool"
+        }
+      ],
+      "name": "Locked",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "deprecate_",
+          "type": "bool"
+        }
+      ],
+      "name": "deprecate",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "deprecated",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "lock_",
+          "type": "bool"
+        }
+      ],
+      "name": "lock",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "locked",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
